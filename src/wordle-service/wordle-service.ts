@@ -6,7 +6,6 @@ import head from 'lodash/fp/head'
 
 import { type Attempt } from './wordle-board'
 import { createLetterFrequencyMap } from './letter-service'
-import { ALL_ANSWERS, ALL_NON_ANSWERS } from './constants'
 
 export const calculateWordScore = curry((frequencyMap: Record<string, number>, word: string): number => {
   const letterToIndexMap = new Map<string, number>()
