@@ -70,7 +70,7 @@ describe('WordleBoard', () => {
       
       const result = wordleBoard.attemptAnswer('relax')
 
-      expect(result).toStrictEqual({ word: 'relax', result: ['OUT_OF_POSITION', 'OUT_OF_POSITION', 'OUT_OF_POSITION', 'CORRECT', 'NOT_IN_WORD'] })
+      expect(result).toStrictEqual({ word: 'relax', result: ['MISPLACED', 'MISPLACED', 'MISPLACED', 'CORRECT', 'NOT_IN_WORD'] })
     })
   })
 
@@ -80,7 +80,7 @@ describe('WordleBoard', () => {
       wordleBoard.attemptAnswer('clove')
 
       expect(wordleBoard.attempts).toStrictEqual([
-        { word: 'clove', result: ['CORRECT', 'CORRECT', 'NOT_IN_WORD', 'NOT_IN_WORD', 'OUT_OF_POSITION'] }
+        { word: 'clove', result: ['CORRECT', 'CORRECT', 'NOT_IN_WORD', 'NOT_IN_WORD', 'MISPLACED'] }
       ])
     })
   })

@@ -1,6 +1,6 @@
 export enum WordleLetterState {
   CORRECT = 'CORRECT',
-  OUT_OF_POSITION = 'OUT_OF_POSITION',
+  MISPLACED = 'MISPLACED',
   NOT_IN_WORD = 'NOT_IN_WORD'  
 }
 
@@ -57,7 +57,7 @@ export class WordleBoard {
         }
   
         if (this._answer.indexOf(letter) > -1) {
-          return WordleLetterState.OUT_OF_POSITION
+          return WordleLetterState.MISPLACED
         }
   
         return WordleLetterState.NOT_IN_WORD

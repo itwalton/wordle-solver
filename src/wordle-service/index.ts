@@ -1,4 +1,5 @@
 export {
   calculateWordScore,
-  findBestFirstGuess,
+  calculateNextGuess,
+  isWordAPossibleAnswer,
 } from './wordle-service'
