@@ -1,14 +1,16 @@
-export enum WordleLetterState {
+export enum LetterState {
   CORRECT = 'CORRECT',
   OUT_OF_POSITION = 'OUT_OF_POSITION',
   NOT_IN_WORD = 'NOT_IN_WORD'  
 }
 
+export type Attempt = { answer: string, state: ReadonlyArray<LetterState> }
+
 export class WordleBoard {    
   private readonly _answer: string
   private readonly _maxAttempts: number
   
-  private _attempts: Array<{ answer: string, state: ReadonlyArray<WordleLetterState> }> = []
+  private _attempts: Array<Attempt> = []
 
   constructor ({
     answer,
@@ -34,25 +36,25 @@ export class WordleBoard {
     return this.numRemainingAttempts > 0
   }
 
-  get attempts(): ReadonlyArray<{ answer: string, state: ReadonlyArray<WordleLetterState> }> {
+  get attempts(): ReadonlyArray<Attempt> {
     return this._attempts
   }
 
-  private calculateWorldAnswerState (answer: string): ReadonlyArray<WordleLetterState> {
+  private calculateWorldAnswerState (answer: string): ReadonlyArray<LetterState> {
     return answer.split('').map((letter, index) => {
       if (this._answer[index] === letter) {
-        return WordleLetterState.CORRECT
+        return LetterState.CORRECT
       }
 
       if (this._answer.indexOf(letter) > -1) {
-        return WordleLetterState.OUT_OF_POSITION
+        return LetterState.OUT_OF_POSITION
       }
 
-      return WordleLetterState.NOT_IN_WORD
+      return LetterState.NOT_IN_WORD
     })
   }
 
-  attemptAnswer (answer: string): ReadonlyArray<WordleLetterState> {
+  attemptAnswer (answer: string): ReadonlyArray<LetterState> {
     if (this.numRemainingAttempts <= 0) {
       throw new Error('OUT_OF_ATTEMPTS')
     } else if (answer.length < this._answer.length) {
