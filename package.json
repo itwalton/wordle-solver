@@ -1,0 +1,17 @@
+{
+  "name": "wordle-solver",
+  "version": "1.0.0",
+  "description": "Solving word problems",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "npm run build && node dist",
+    "build": "tsc --project tsconfig.json"
+  },
+  "author": "Ian Walton",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^28.1.1",
+    "ts-jest": "^28.0.5",
+    "typescript": "^4.7.4"
+  }
+}
