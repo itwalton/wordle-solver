@@ -65,22 +65,22 @@ describe('WordleBoard', () => {
       expect(() => wordleBoard.attemptAnswer('morey')).toThrow('OUT_OF_ATTEMPTS')
     })
 
-    it('returns attempt state', () => {
+    it('returns attempt', () => {
       const wordleBoard = new WordleBoard({ answer: 'clear', maxAttempts: 1 })
       
       const result = wordleBoard.attemptAnswer('relax')
 
-      expect(result).toStrictEqual(['OUT_OF_POSITION', 'OUT_OF_POSITION', 'OUT_OF_POSITION', 'CORRECT', 'NOT_IN_WORD'])
+      expect(result).toStrictEqual({ word: 'relax', result: ['OUT_OF_POSITION', 'OUT_OF_POSITION', 'OUT_OF_POSITION', 'CORRECT', 'NOT_IN_WORD'] })
     })
   })
 
   describe('.attempts', () => {
-    it('saves wrong answers', () => {
+    it('saves previous attempts', () => {
       const wordleBoard = new WordleBoard({ answer: 'clear', maxAttempts: 1 })
       wordleBoard.attemptAnswer('clove')
 
       expect(wordleBoard.attempts).toStrictEqual([
-        { answer: 'clove', state: ['CORRECT', 'CORRECT', 'NOT_IN_WORD', 'NOT_IN_WORD', 'OUT_OF_POSITION'] }
+        { word: 'clove', result: ['CORRECT', 'CORRECT', 'NOT_IN_WORD', 'NOT_IN_WORD', 'OUT_OF_POSITION'] }
       ])
     })
   })

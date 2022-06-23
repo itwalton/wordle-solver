@@ -4,8 +4,8 @@ import sortBy from 'lodash/fp/sortBy'
 import curry from 'lodash/fp/curry'
 import head from 'lodash/fp/head'
 
-import { type Attempt } from './wordle-board'
-import { createLetterFrequencyMap } from './letter-service'
+import { type Attempt } from '../wordle-board'
+import { createLetterFrequencyMap } from '../letter-service'
 
 export const calculateWordScore = curry((frequencyMap: Record<string, number>, word: string): number => {
   const letterToIndexMap = new Map<string, number>()

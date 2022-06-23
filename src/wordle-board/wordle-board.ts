@@ -1,10 +1,10 @@
-export enum LetterState {
+export enum WordleLetterState {
   CORRECT = 'CORRECT',
   OUT_OF_POSITION = 'OUT_OF_POSITION',
   NOT_IN_WORD = 'NOT_IN_WORD'  
 }
 
-export type Attempt = { answer: string, state: ReadonlyArray<LetterState> }
+export type Attempt = { word: string, result: ReadonlyArray<WordleLetterState> }
 
 export class WordleBoard {    
   private readonly _answer: string
@@ -40,32 +40,32 @@ export class WordleBoard {
     return this._attempts
   }
 
-  private calculateWorldAnswerState (answer: string): ReadonlyArray<LetterState> {
-    return answer.split('').map((letter, index) => {
-      if (this._answer[index] === letter) {
-        return LetterState.CORRECT
-      }
-
-      if (this._answer.indexOf(letter) > -1) {
-        return LetterState.OUT_OF_POSITION
-      }
-
-      return LetterState.NOT_IN_WORD
-    })
-  }
-
-  attemptAnswer (answer: string): ReadonlyArray<LetterState> {
+  attemptAnswer (word: string): Attempt {
     if (this.numRemainingAttempts <= 0) {
       throw new Error('OUT_OF_ATTEMPTS')
-    } else if (answer.length < this._answer.length) {
+    } else if (word.length < this._answer.length) {
       throw new Error('TOO_SHORT')
-    } else if (answer.length > this._answer.length) {
+    } else if (word.length > this._answer.length) {
       throw new Error('TOO_LONG')
     }
 
-    const state = this.calculateWorldAnswerState(answer)
-    this._attempts.push({ answer, state })
+    const attempt = {
+      word,
+      result: word.split('').map((letter, index) => {
+        if (this._answer[index] === letter) {
+          return WordleLetterState.CORRECT
+        }
+  
+        if (this._answer.indexOf(letter) > -1) {
+          return WordleLetterState.OUT_OF_POSITION
+        }
+  
+        return WordleLetterState.NOT_IN_WORD
+      })
+    }
 
-    return state
+    this._attempts.push(attempt)
+
+    return attempt
   }
 }
