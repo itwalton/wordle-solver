@@ -1,3 +1,5 @@
+src/constants.ts
+
 dist/
 
 node_modules/
