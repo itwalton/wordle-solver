@@ -24,4 +24,4 @@ export const findBestFirstGuess = (allAnswers: string[], allAcceptedNonAnswers: 
   sortBy(calculateWordScore(createLetterFrequencyMap(allAnswers))),
   reverse,
   head,
-)([...allAnswers, ...allAcceptedNonAnswers])
+)([...allAnswers, ...allAcceptedNonAnswers]) as string
