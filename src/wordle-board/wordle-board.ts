@@ -1,35 +1,42 @@
-export enum WordleLetterState {
-  CORRECT = 'CORRECT',
-  MISPLACED = 'MISPLACED',
-  NOT_IN_WORD = 'NOT_IN_WORD'  
+import pipe from 'lodash/fp/pipe'
+import keys from 'lodash/fp/keys'
+import any from 'lodash/fp/any'
+import filter from 'lodash/fp/filter'
+import map from 'lodash/fp/map'
+import reduce from 'lodash/fp/reduce'
+import intersection from 'lodash/fp/intersection'
+import size from 'lodash/fp/size'
+import reject from 'lodash/fp/reject'
+import sortBy from 'lodash/fp/sortBy'
+import reverse from 'lodash/fp/reverse'
+import head from 'lodash/fp/head'
+import flatMap from 'lodash/fp/flatMap'
+
+import { createLetterFrequencyMap } from '../letter-service'
+
+export type AttemptResult = { letter: string, index: number, isCorrect: boolean, isMisplaced: boolean }
+
+export type Attempt = {
+  word: string,
+  results: ReadonlyArray<AttemptResult>
 }
 
-export type Attempt = { word: string, result: ReadonlyArray<WordleLetterState> }
-
-export class WordleBoard {    
-  private readonly _answer: string
-  private readonly _maxAttempts: number
+export class WordleBoard {
+  private readonly answerLength = 5
+  private readonly maxNumAttempts = 6
   
   private _attempts: Array<Attempt> = []
+  private _invalidLetters: Array<string> = []
+  private _misplacedLetters: Record<string, Array<number>> = {}
+  private _correctLetters: Record<string, number> = {}
 
-  constructor ({
-    answer,
-    maxAttempts = 5
-  }: { answer: string, maxAttempts?: number }) {
-    if (answer.length < 1) {
-      throw new Error('MUST_PROVIDE_ANSWER')
-    }
-
-    if (maxAttempts < 1) {
-      throw new Error('MUST_PROVIDE_MAX_ATTEMPTS')
-    }
-
-    this._answer = answer
-    this._maxAttempts = maxAttempts
-  }
+  constructor(
+    private readonly _allAnswers: string[],
+    private readonly _allNonAnswers: string[]
+  ) {}
 
   get numRemainingAttempts (): number {
-    return this._maxAttempts - this._attempts.length
+    return this.maxNumAttempts - this._attempts.length
   }
 
   get hasRemainingAttempts (): boolean {
@@ -40,32 +47,85 @@ export class WordleBoard {
     return this._attempts
   }
 
-  attemptAnswer (word: string): Attempt {
-    if (this.numRemainingAttempts <= 0) {
-      throw new Error('OUT_OF_ATTEMPTS')
-    } else if (word.length < this._answer.length) {
-      throw new Error('TOO_SHORT')
-    } else if (word.length > this._answer.length) {
-      throw new Error('TOO_LONG')
-    }
+  get isSolved(): boolean {
+    return pipe(keys, size)(this._correctLetters) === this.answerLength
+  }
 
-    const attempt = {
+  private wordContainsInvalidLetter(word: string): boolean {
+    return pipe(intersection(word.split('')), size)(this._invalidLetters) > 0
+  }
+
+  private wordContainsMisplacedLetter(word: string): boolean {
+    return pipe(keys, any((letter) => {
+      const positionInWord = word.indexOf(letter)
+      return positionInWord > -1 && this._misplacedLetters[letter].includes(positionInWord)
+    }))(this._misplacedLetters)
+  }
+
+  private wordIsMissingCorrectLetter(word: string): boolean {
+    return pipe(keys, any((letter) => word.indexOf(letter) !== this._correctLetters[letter]))(this._correctLetters)
+  }
+
+  private calculateWordScore (frequencyMap: Record<string, number>, word: string): number {
+    const letterToIndexMap = new Map<string, number>()
+  
+    return word.split('').reduce((score, letter, index) => {
+      if (!letterToIndexMap.has(letter)) {
+        score += frequencyMap[letter] ?? 0
+        letterToIndexMap.set(letter, index)
+      }
+  
+      return score 
+    }, 0)
+  }
+
+  addAttempt(word: string, resultStrs: Array<'correct' | 'misplaced' | 'incorrect'>): void {
+    this._attempts.push({
       word,
-      result: word.split('').map((letter, index) => {
-        if (this._answer[index] === letter) {
-          return WordleLetterState.CORRECT
-        }
-  
-        if (this._answer.indexOf(letter) > -1) {
-          return WordleLetterState.MISPLACED
-        }
-  
-        return WordleLetterState.NOT_IN_WORD
-      })
+      results: word.split('').map((letter, index) => ({
+        letter,
+        index,
+        isCorrect: resultStrs[index] === 'correct',
+        isMisplaced: resultStrs[index] === 'misplaced',
+      })),
+    })
+
+    this._invalidLetters = pipe(
+      flatMap('results'),
+      filter({ isCorrect: false, isMisplaced: false }),
+      map('letter')
+    )(this._attempts)
+
+    this._misplacedLetters = pipe(
+      flatMap('results'),
+      filter('isMisplaced'),
+      reduce((agg, result: AttemptResult) => Object.assign(agg, {
+        [result.letter]: agg[result.letter] ? agg[result.letter].concat(result.index) : [result.index]
+      }), {} as Record<string, number[]>)
+    )(this._attempts)
+
+    this._correctLetters = pipe(
+      flatMap('results'),
+      filter('isCorrect'),
+      reduce((agg, result: AttemptResult) => Object.assign(agg, {
+        [result.letter]: result.index
+      }), {} as Record<string, number>)
+    )(this._attempts)
+  }
+
+  calculateBestGuess(): string {
+    const possibleAnswers = reject((word) => this.wordContainsInvalidLetter(word) || this.wordContainsMisplacedLetter(word) || this.wordIsMissingCorrectLetter(word), this._allAnswers)
+    const possibleAnswerFrequencyMap = createLetterFrequencyMap(possibleAnswers)
+    
+    const possibleGuesses = [...possibleAnswers]
+    if (this._attempts.length < 2) {
+      possibleGuesses.push(...reject((word) => this.wordContainsInvalidLetter(word) || this.wordContainsMisplacedLetter(word) || this.wordIsMissingCorrectLetter(word), this._allNonAnswers))
     }
 
-    this._attempts.push(attempt)
-
-    return attempt
+    return pipe(
+      sortBy((word: string) => this.calculateWordScore(possibleAnswerFrequencyMap, word)),
+      reverse,
+      head,
+    )(possibleGuesses) as string 
   }
 }
