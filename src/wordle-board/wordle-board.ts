@@ -9,7 +9,7 @@ import size from 'lodash/fp/size'
 import reject from 'lodash/fp/reject'
 import sortBy from 'lodash/fp/sortBy'
 import reverse from 'lodash/fp/reverse'
-import head from 'lodash/fp/head'
+import slice from 'lodash/fp/slice'
 import flatMap from 'lodash/fp/flatMap'
 
 import { createLetterFrequencyMap } from '../letter-service'
@@ -31,8 +31,7 @@ export class WordleBoard {
   private _correctLetters: Record<string, number> = {}
 
   constructor(
-    private readonly _allAnswers: string[],
-    private readonly _allNonAnswers: string[]
+    private readonly _allAnswers: string[]
   ) {}
 
   get numRemainingAttempts (): number {
@@ -70,7 +69,7 @@ export class WordleBoard {
     const letterToIndexMap = new Map<string, number>()
   
     return word.split('').reduce((score, letter, index) => {
-      if (!letterToIndexMap.has(letter)) {
+      if (!letterToIndexMap.has(letter) && this._attempts.length < 2) {
         score += frequencyMap[letter] ?? 0
         letterToIndexMap.set(letter, index)
       }
@@ -113,19 +112,14 @@ export class WordleBoard {
     )(this._attempts)
   }
 
-  calculateBestGuess(): string {
+  calculateBestGuesses(): string[] {
     const possibleAnswers = reject((word) => this.wordContainsInvalidLetter(word) || this.wordContainsMisplacedLetter(word) || this.wordIsMissingCorrectLetter(word), this._allAnswers)
     const possibleAnswerFrequencyMap = createLetterFrequencyMap(possibleAnswers)
-    
-    const possibleGuesses = [...possibleAnswers]
-    if (this._attempts.length < 2) {
-      possibleGuesses.push(...reject((word) => this.wordContainsInvalidLetter(word) || this.wordContainsMisplacedLetter(word) || this.wordIsMissingCorrectLetter(word), this._allNonAnswers))
-    }
 
     return pipe(
       sortBy((word: string) => this.calculateWordScore(possibleAnswerFrequencyMap, word)),
       reverse,
-      head,
-    )(possibleGuesses) as string 
+      slice(0, 10),
+    )(possibleAnswers)
   }
 }
